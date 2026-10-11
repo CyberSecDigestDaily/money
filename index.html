@@ -1,0 +1,903 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https://api.github.com; img-src data:; form-action 'none'; base-uri 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex,nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Money Plan">
+<meta name="theme-color" content="#eceff1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14181b" media="(prefers-color-scheme: dark)">
+<title>Money Plan</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231f3a5f'/%3E%3Ctext x='32' y='45' font-family='Arial' font-weight='700' font-size='38' text-anchor='middle' fill='%23fff'%3E%C2%A3%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+/* Layout: one calm column that follows the money in order: payday, the month, the check-in, the car date, the to-do list, the dates. */
+:root{
+  --bg:#eceff1; --panel:#ffffff; --sunk:#f4f6f7; --fg:#1d2226; --muted:#59626a; --line:#d3d9dd;
+  --accent:#1f3a5f; --accent-soft:#e2e8f0; --on-accent:#ffffff;
+  --good:#4b6a2b; --good-soft:#e5edd9; --warn:#93600a; --warn-soft:#f5ead6; --bad:#a3392a; --bad-soft:#f5e0dc;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14181b; --panel:#1c2125; --sunk:#181c20; --fg:#e6e9eb; --muted:#9aa4ab; --line:#30373d;
+    --accent:#9db8dc; --accent-soft:#213045; --on-accent:#13202f;
+    --good:#a6be74; --good-soft:#26301b; --warn:#e2aa4c; --warn-soft:#3a2d14; --bad:#ea8571; --bad-soft:#3d221d;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14181b; --panel:#1c2125; --sunk:#181c20; --fg:#e6e9eb; --muted:#9aa4ab; --line:#30373d;
+  --accent:#9db8dc; --accent-soft:#213045; --on-accent:#13202f;
+  --good:#a6be74; --good-soft:#26301b; --warn:#e2aa4c; --warn-soft:#3a2d14; --bad:#ea8571; --bad-soft:#3d221d;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:400 16px/1.55 var(--f-body);-webkit-font-smoothing:antialiased;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+[hidden]{display:none!important}
+img{max-width:100%}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1000px;margin:0 auto;padding-inline:20px;padding-block:32px 72px;display:grid;gap:60px}
+h1,h2,h3{font-family:var(--f-display);font-stretch:118%;line-height:1.1;margin:0;text-wrap:balance;letter-spacing:-0.01em}
+h1{font-size:clamp(2.1rem,6vw,3.2rem);font-weight:780}
+h2{font-size:clamp(1.4rem,3.4vw,1.85rem);font-weight:720}
+h3{font-size:1.02rem;font-weight:700;font-stretch:110%}
+.eyebrow{font:500 .72rem/1.2 var(--f-mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+.lede{max-width:60ch;color:var(--muted);margin:12px 0 0;font-size:1.08rem}
+.sec-lede{max-width:66ch;color:var(--muted);margin:10px 0 0}
+.fine{font-size:.86rem;color:var(--muted);margin:0}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+section{display:grid;gap:20px;min-width:0}
+.sec-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.save-state{font:500 .78rem var(--f-mono);color:var(--muted)}
+.save-state.bad{color:var(--bad)}
+.empty{color:var(--muted);font-style:italic;margin:0}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.locked .needs-data{display:none!important}
+
+/* Connect */
+.connect{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px;display:grid;gap:14px;max-width:660px}
+.steps{margin:0;padding-left:1.25rem;display:grid;gap:8px}
+.connect form{display:grid;gap:10px}
+.connect label.f{display:grid;gap:4px;font-size:.84rem;color:var(--muted)}
+.connect input[type=password]{font:500 .95rem var(--f-mono);padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);width:100%;min-width:0}
+.chkrow{display:flex;gap:8px;align-items:center;font-size:.9rem}
+.chkrow input{accent-color:var(--accent);width:1rem;height:1rem}
+.btn{font:600 .95rem var(--f-body);background:var(--accent);color:var(--on-accent);border:0;border-radius:8px;padding:10px 16px;cursor:pointer;justify-self:start}
+.btn:disabled{opacity:.6;cursor:default}
+.linkbtn{background:none;border:0;color:var(--accent);font:inherit;text-decoration:underline;cursor:pointer;padding:0}
+
+/* Summary tiles */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:26px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:6px;align-content:start}
+.t-label{font:500 .7rem/1.2 var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.t-num{font-family:var(--f-display);font-stretch:112%;font-weight:720;font-size:1.95rem;line-height:1.05;font-variant-numeric:tabular-nums}
+.t-num.neg{color:var(--bad)}
+.t-sub{font-size:.84rem;color:var(--muted)}
+.bar{height:7px;border-radius:4px;background:var(--sunk);overflow:hidden;border:1px solid var(--line)}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .45s ease}
+.bar.done i{background:var(--good)}
+.notice{margin-top:18px;padding:11px 14px;border-radius:8px;background:var(--warn-soft);font-size:.92rem}
+
+/* Payday statement */
+.statement{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.st-head{display:flex;justify-content:space-between;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line);font:500 .72rem var(--f-mono);color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+.st-row{display:grid;grid-template-columns:5.6rem minmax(0,1fr) auto;gap:14px;padding:11px 18px;border-bottom:1px dashed var(--line);align-items:baseline}
+.st-row:last-child{border-bottom:0}
+.st-date{font:500 .82rem var(--f-mono);color:var(--muted)}
+.st-desc{min-width:0;font-weight:600}
+.st-desc small{display:block;font-weight:400;color:var(--muted);font-size:.84rem}
+.st-amt{font:500 .95rem var(--f-mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.st-amt.in{color:var(--good)}
+.st-row.total{background:var(--sunk)}
+.st-row.total .st-amt{font-weight:600}
+.st-row.short .st-amt{color:var(--bad)}
+@media (max-width:540px){.st-row{grid-template-columns:4.4rem minmax(0,1fr)}.st-amt{grid-column:2;text-align:left}}
+
+/* Plan editor */
+.plan-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:34px 36px}
+@media (max-width:780px){.plan-grid{grid-template-columns:1fr}}
+.group{display:grid;gap:4px;align-content:start;min-width:0}
+.g-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding-bottom:8px;border-bottom:2px solid var(--fg)}
+.g-total{font:500 1rem var(--f-mono);font-variant-numeric:tabular-nums}
+.g-hint{font-size:.84rem;color:var(--muted);margin:6px 0 2px}
+.line{display:grid;grid-template-columns:minmax(0,1fr) 7.6rem 1.9rem;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+.line input.lbl{border:0;border-bottom:1px solid transparent;background:transparent;font:inherit;color:var(--fg);padding:4px 0;width:100%;min-width:0;text-overflow:ellipsis}
+.line input.lbl:hover:not(:disabled){border-bottom-color:var(--line)}
+.line input.amt{font:500 .95rem var(--f-mono);text-align:right;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);width:100%;font-variant-numeric:tabular-nums}
+.line .note{grid-column:1/-1;font-size:.8rem;color:var(--muted);margin-top:-3px}
+.rm{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:1.15rem;line-height:1;border-radius:6px;width:1.9rem;height:1.9rem}
+.rm:hover{color:var(--bad);background:var(--bad-soft)}
+.add{justify-self:start;border:1px dashed var(--line);background:transparent;color:var(--accent);font:600 .86rem var(--f-body);padding:6px 11px;border-radius:6px;cursor:pointer;margin-top:8px}
+.add:hover{border-color:var(--accent)}
+.share{display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:.9rem;color:var(--muted);padding:6px 0 8px;border-bottom:1px solid var(--line)}
+.share input[type=range]{flex:1 1 140px;accent-color:var(--accent)}
+.share output{font:500 .95rem var(--f-mono);color:var(--fg);min-width:3.2rem;text-align:right}
+.my{display:flex;justify-content:space-between;gap:12px;padding:10px 0 0;font-weight:700}
+.result{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px 24px;padding:18px 22px;border-radius:10px;background:var(--accent-soft)}
+.result .big{font-family:var(--f-display);font-stretch:112%;font-weight:760;font-size:2.2rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.result .sub{max-width:44ch;color:var(--muted)}
+.result.bad{background:var(--bad-soft)}
+.result.bad .big{color:var(--bad)}
+.sub-h{margin-bottom:6px}
+.tbl-wrap{overflow-x:auto;min-width:0}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:baseline}
+th{font:500 .7rem var(--f-mono);text-transform:uppercase;letter-spacing:.07em;color:var(--muted);white-space:nowrap}
+td.n,th.n{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.good{color:var(--good)} td.bad{color:var(--bad)}
+tr.note-row td{font-size:.84rem;color:var(--muted);padding-top:0}
+
+/* Check-in */
+.goals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 36px}
+@media (max-width:700px){.goals{grid-template-columns:1fr}}
+.goal{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 16px;align-items:baseline}
+.goal .bar{grid-column:1/-1}
+.g-name{font-weight:700}
+.g-val{font:500 .9rem var(--f-mono);white-space:nowrap}
+.goal .g-hint{grid-column:1/-1;margin:0}
+.ci-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:22px;align-items:start}
+@media (max-width:840px){.ci-grid{grid-template-columns:1fr}}
+form.ci{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+form.ci label{display:grid;gap:4px;font-size:.82rem;color:var(--muted);min-width:0}
+form.ci input{font:500 .95rem var(--f-mono);padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);width:100%;min-width:0}
+form.ci input#ci-note{font-family:var(--f-body)}
+#ciFields{display:contents}
+.wide{grid-column:1/-1}
+.form-foot{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.chart{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 14px 10px;min-width:0}
+.chart svg{display:block;width:100%;height:auto}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.8rem;color:var(--muted);margin-top:6px}
+.legend i{display:inline-block;width:16px;border-top:2.5px solid var(--accent);vertical-align:middle;margin-right:6px}
+.legend i.target{border-top:2px dashed var(--muted)}
+svg .grid{stroke:var(--line);stroke-width:1}
+svg .ax{fill:var(--muted);font:500 11px var(--f-mono)}
+svg .ax.strong{fill:var(--fg)}
+svg .target{stroke:var(--muted);stroke-width:1.6;stroke-dasharray:5 4;fill:none}
+svg .actual{stroke:var(--accent);stroke-width:2.6;fill:none;stroke-linejoin:round;stroke-linecap:round}
+svg .dot{fill:var(--accent);stroke:var(--panel);stroke-width:2}
+
+/* Car decision */
+.car-inputs{display:flex;flex-wrap:wrap;gap:12px 20px}
+.car-inputs label,.calc label{display:grid;gap:4px;font-size:.8rem;color:var(--muted);min-width:0}
+.car-inputs input,.calc input[type=number]{font:500 .95rem var(--f-mono);padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--fg);width:100%;min-width:0}
+.car-inputs label{width:12.5rem;max-width:100%}
+.opts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
+@media (max-width:880px){.opts{grid-template-columns:1fr}}
+.opt{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:11px;align-content:start;min-width:0}
+.pill{justify-self:start;font:600 .68rem var(--f-mono);text-transform:uppercase;letter-spacing:.07em;padding:3px 9px;border-radius:999px;background:var(--good-soft);color:var(--good)}
+.pill.q{background:var(--accent-soft);color:var(--accent)}
+.pill.n{background:var(--sunk);color:var(--muted);border:1px solid var(--line)}
+.kv{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 12px;font-size:.9rem;margin:0}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;font-family:var(--f-mono);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.kv dd.strong{font-weight:600;color:var(--fg)}
+.kv dd.good{color:var(--good)}
+.calc{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:10px;border-radius:8px;background:var(--sunk)}
+.calc .chk{grid-column:1/-1;display:flex;gap:8px;align-items:center;font-size:.84rem;color:var(--fg)}
+.calc .chk input{accent-color:var(--accent);width:1rem;height:1rem}
+
+/* Actions */
+.act-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px 36px}
+@media (max-width:780px){.act-groups{grid-template-columns:1fr}}
+.act-group{min-width:0}
+.act-group h3{display:flex;justify-content:space-between;gap:8px;padding-bottom:8px;border-bottom:2px solid var(--fg)}
+.act-group h3 span{font:500 .8rem var(--f-mono);color:var(--muted);font-stretch:100%}
+.act{display:grid;grid-template-columns:1.5rem minmax(0,1fr);gap:8px;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.act input{width:1.1rem;height:1.1rem;margin:.2rem 0 0;accent-color:var(--good);cursor:pointer}
+.a-text{font-weight:600}
+.a-detail{display:block;font-size:.86rem;color:var(--muted);margin-top:2px}
+.act.done .a-text{text-decoration:line-through;color:var(--muted)}
+
+/* Dates, rules, footer */
+.dates{display:grid;border-top:2px solid var(--fg)}
+.date{display:grid;grid-template-columns:10.5rem minmax(0,1fr);gap:18px;padding:12px 0;border-bottom:1px solid var(--line)}
+.date b{font:500 .84rem var(--f-mono);color:var(--accent);padding-top:2px}
+@media (max-width:560px){.date{grid-template-columns:1fr;gap:2px}}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:4px 32px}
+.rule{padding:12px 0;border-top:1px solid var(--line);display:grid;gap:3px}
+.rule b{font-family:var(--f-display);font-stretch:110%;font-size:1rem}
+.rule span{color:var(--muted);font-size:.92rem}
+.foot{border-top:1px solid var(--line);padding-top:18px;display:grid;gap:8px}
+.sync{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center}
+@media (prefers-reduced-motion: reduce){.bar i{transition:none}}
+</style>
+</head>
+<body class="locked">
+<div class="wrap">
+  <header>
+    <p class="eyebrow" id="hSub">Private · syncs through GitHub</p>
+    <h1 id="hTitle">Money Plan</h1>
+    <p class="lede" id="hLede">Payday gives every pound a job. One check-in a month.</p>
+    <div class="tiles needs-data">
+      <div class="tile"><span class="t-label">Left to save each month</span><span class="t-num" id="tSurplus">—</span><span class="t-sub">from the plan below</span></div>
+      <div class="tile"><span class="t-label">Saved so far</span><span class="t-num" id="tSaved">—</span><span class="t-sub" id="tSavedSub">buffer + car fund at your last check-in</span></div>
+      <div class="tile"><span class="t-label">Car fund</span><span class="t-num" id="tCar">—</span><div class="bar"><i id="tCarBar"></i></div><span class="t-sub" id="tCarSub">for the balloon</span></div>
+      <div class="tile"><span class="t-label">Months to the balloon</span><span class="t-num" id="tMonths">—</span><span class="t-sub" id="tMonthsSub">—</span></div>
+    </div>
+    <div class="notice" id="notice" hidden></div>
+  </header>
+
+  <section class="connect" id="connect" aria-labelledby="connectH" hidden>
+    <h2 id="connectH">Connect this device</h2>
+    <p class="fine" style="font-size:1rem">Your numbers live in a private GitHub repository, so this page needs a token before it can read them. One token works on all your devices; paste it once on each.</p>
+    <ol class="steps">
+      <li><a id="tokenLink" target="_blank" rel="noopener">Open GitHub's token page</a>. The name, a one-year expiry and the Contents permission are filled in.</li>
+      <li>Under <b>Repository access</b>, choose <b>Only select repositories</b> and pick <b id="repoName">money-plan-data</b>.</li>
+      <li>Click <b>Generate token</b>, copy it and paste it below.</li>
+    </ol>
+    <form id="connectForm" novalidate>
+      <input class="sr-only" type="text" name="username" autocomplete="username" value="money-plan" tabindex="-1" aria-hidden="true">
+      <label class="f" for="tokenInput">GitHub token<input id="tokenInput" name="password" type="password" autocomplete="current-password" placeholder="github_pat_…" spellcheck="false" autocapitalize="off"></label>
+      <label class="chkrow" for="remember"><input id="remember" type="checkbox" checked> Remember on this device</label>
+      <button class="btn" id="connectBtn" type="submit">Connect</button>
+      <p class="fine" id="connectMsg" aria-live="polite"></p>
+    </form>
+    <p class="fine">The token can only read and write that one private repository. You can revoke it any time in GitHub's settings. On an iPhone, add this page to your Home Screen so Safari doesn't forget the token.</p>
+  </section>
+
+  <section id="payday" class="needs-data" aria-labelledby="paydayH">
+    <div>
+      <p class="eyebrow">Every payday</p>
+      <h2 id="paydayH">How payday should look</h2>
+      <p class="sec-lede">The money moves the day after it lands. Savings go to a different bank, away from your spending app, so they stop drifting back to cover bills.</p>
+    </div>
+    <div class="statement">
+      <div class="st-head"><span id="bankName">Main current account</span><span>Each month</span></div>
+      <div id="statementRows"></div>
+    </div>
+  </section>
+
+  <section id="plan" class="needs-data" aria-labelledby="planH">
+    <div class="sec-head">
+      <div><p class="eyebrow">Every month</p><h2 id="planH">The plan</h2></div>
+      <span class="save-state" id="saveState" aria-live="polite"></span>
+    </div>
+    <p class="sec-lede">Change any amount and it saves to GitHub. Household lines are the full bill; the slider sets the share you pay.</p>
+    <div class="plan-grid" id="planGrid"></div>
+    <div class="result" id="result">
+      <div><span class="t-label">Left to save each month</span><div class="big" id="resultBig">—</div></div>
+      <span class="sub" id="resultSub"></span>
+    </div>
+    <div>
+      <h3 class="sub-h">Then and now</h3>
+      <p class="fine" id="baselineNote">Your earlier spending against this plan.</p>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Area</th><th class="n">Before</th><th class="n">Plan</th><th class="n">Change</th></tr></thead>
+          <tbody id="thenBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="checkin" class="needs-data" aria-labelledby="ciH">
+    <div>
+      <p class="eyebrow">Payday weekend, once a month</p>
+      <h2 id="ciH">Check-in</h2>
+      <p class="sec-lede">Fifteen minutes. Open each app, type the balances, save. The line shows whether you're on course for the balloon.</p>
+    </div>
+    <div class="goals" id="goals"></div>
+    <div class="ci-grid">
+      <form class="ci" id="ciForm" novalidate>
+        <label class="wide" for="ciMonth">Month<input id="ciMonth" type="month"></label>
+        <div id="ciFields"></div>
+        <label class="wide" for="ci-note">Note<input id="ci-note" type="text" maxlength="500" placeholder="Anything that happened this month" autocomplete="off"></label>
+        <div class="wide form-foot"><button class="btn" id="ciSave" type="submit">Save check-in</button><span class="fine" id="ciMsg" aria-live="polite"></span></div>
+      </form>
+      <div class="chart">
+        <svg id="chart" role="img" aria-label="Buffer plus car fund by month, against the target for the balloon date"></svg>
+        <div class="legend"><span><i></i>Buffer + car fund</span><span><i class="target"></i>On course for the balloon</span></div>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr id="ciHead"></tr></thead>
+        <tbody id="ciBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="car" class="needs-data" aria-labelledby="carH">
+    <div>
+      <p class="eyebrow" id="carWhen">The balloon date</p>
+      <h2 id="carH">The <span class="carName">car</span> decision</h2>
+      <p class="sec-lede"><span id="carLede">None of these routes needs new car finance.</span> Balloon about <span id="balloonText">—</span>.</p>
+    </div>
+    <div class="car-inputs">
+      <label for="a4Value"><span><span class="carName">Car</span> value at the balloon (estimate)</span><input id="a4Value" type="number" inputmode="decimal" min="0" step="100"></label>
+      <label for="balloon">Balloon (final payment)<input id="balloon" type="number" inputmode="decimal" min="0" step="50"></label>
+    </div>
+    <div class="opts">
+      <article class="opt">
+        <span class="pill">Recommended</span>
+        <h3>Pay the balloon, keep the <span class="carName">car</span></h3>
+        <p class="fine">Pay it from the car fund. You then own a car worth about <b id="kOwn">—</b>, and the monthly finance payment stops.</p>
+        <dl class="kv">
+          <dt>Car today, a month</dt><dd id="kNow">—</dd>
+          <dt>After the balloon</dt><dd id="kKeep">—</dd>
+          <dt>Freed every month</dt><dd id="kFree" class="good">—</dd>
+        </dl>
+        <p class="fine">Running costs here are insurance, tax and fuel. Servicing comes out of the irregular pot.</p>
+      </article>
+      <article class="opt">
+        <span class="pill q">Get a quote</span>
+        <h3>A new EV through salary sacrifice</h3>
+        <p class="fine">Salary sacrifice comes out of your pay before tax, NI and student loan, and usually covers insurance, servicing and tyres.</p>
+        <div class="calc">
+          <label for="evGross">Quote, £ a month before tax<input id="evGross" type="number" inputmode="decimal" min="0" step="10"></label>
+          <label for="evList">Car's list price<input id="evList" type="number" inputmode="decimal" min="0" step="500"></label>
+          <label for="evBik">Company car tax %<input id="evBik" type="number" inputmode="decimal" min="0" max="40" step="1"></label>
+          <label for="evCharge">Home charging, £ a month<input id="evCharge" type="number" inputmode="decimal" min="0" step="5"></label>
+          <label class="chk" for="evSL"><input id="evSL" type="checkbox"> Student loan comes off your pay</label>
+        </div>
+        <dl class="kv">
+          <dt>Real cost a month</dt><dd id="eNet" class="strong">—</dd>
+          <dt>Tax, NI and loan you skip</dt><dd id="eRate">—</dd>
+          <dt>Company car tax, a month</dt><dd id="eBik">—</dd>
+          <dt>vs the car today</dt><dd id="eVsNow">—</dd>
+          <dt>vs a paid-off car</dt><dd id="eVsKeep">—</dd>
+          <dt>Equity if you sell</dt><dd id="eEquity">—</dd>
+        </dl>
+        <p class="fine" id="evNote">Ask the scheme how it checks affordability and what happens if you change jobs.</p>
+      </article>
+      <article class="opt">
+        <span class="pill n">If the fund grows enough</span>
+        <h3>Sell it and buy with cash</h3>
+        <p class="fine">No finance at all. Same-level money buys roughly what you already have. A step up comes from saving the freed finance payment for a year after the balloon.</p>
+        <dl class="kv">
+          <dt>Car fund, last check-in</dt><dd id="cFund">—</dd>
+          <dt>Equity in the car</dt><dd id="cEquity">—</dd>
+          <dt>Cash for a car</dt><dd id="cTotal" class="strong">—</dd>
+        </dl>
+      </article>
+    </div>
+  </section>
+
+  <section id="actions" class="needs-data" aria-labelledby="actH">
+    <div class="sec-head">
+      <div><p class="eyebrow">Ongoing</p><h2 id="actH">What to do</h2></div>
+      <span class="save-state" id="actCount"></span>
+    </div>
+    <div class="act-groups" id="actGroups"></div>
+  </section>
+
+  <section id="dates" class="needs-data" aria-labelledby="datesH">
+    <div><p class="eyebrow">Reference</p><h2 id="datesH">Dates that move money</h2></div>
+    <div class="dates" id="datesList"></div>
+  </section>
+
+  <section id="rules" aria-labelledby="rulesH">
+    <div><p class="eyebrow">How to think about money</p><h2 id="rulesH">House rules</h2></div>
+    <div class="rules">
+      <div class="rule"><b>Pay yourself first</b><span>Savings leave the day after payday, for an account you can't see from your phone.</span></div>
+      <div class="rule"><b>Every pound has a job</b><span>Plan the month before it starts. What's left goes to savings, not the next online basket.</span></div>
+      <div class="rule"><b>One-offs aren't one-offs</b><span>Most months have one. Fund them on purpose through the irregular pot.</span></div>
+      <div class="rule"><b>No credit for things that lose value</b><span>None at all while you're clearing debt, and that includes pay-later and device plans.</span></div>
+      <div class="rule"><b>Raises and bonuses go to goals</b><span>Keep spending where it is when your pay goes up. The gap is what builds money.</span></div>
+      <div class="rule"><b>The cheapest car is the one you own</b><span>Every month without a car payment funds the next car, or the next move.</span></div>
+    </div>
+    <p class="fine">Further reading: the <a href="https://ukpersonal.finance/flowchart/" target="_blank" rel="noopener">r/UKPersonalFinance flowchart</a> (what to do next, in order), <a href="https://debtcamel.co.uk/" target="_blank" rel="noopener">Debt Camel</a> (debt plans, settlements, refunds) and <a href="https://www.moneysavingexpert.com/" target="_blank" rel="noopener">MoneySavingExpert</a> (deals and switching).</p>
+  </section>
+
+  <footer class="foot">
+    <p class="fine needs-data" id="footNote"></p>
+    <div class="sync fine needs-data">
+      <span id="syncState">Not synced yet</span>
+      <a id="historyLink" target="_blank" rel="noopener">Change history on GitHub</a>
+      <button type="button" class="linkbtn" id="disconnectBtn">Disconnect this device</button>
+    </div>
+  </footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+var CFG={owner:"CyberSecDigestDaily",repo:"money-plan-data",path:"data.json",branch:"main",tokenKey:"moneyplan.gh.token"};
+var KEYS=["buffer","carFund","debt1","debt2","debt3","planDebt","carSettle"];
+var DEBT_KEYS=["debt1","debt2","debt3"];
+var DEFAULT_LABELS={buffer:"Emergency buffer",carFund:"Car fund",debt1:"Card 1 owed",debt2:"Card 2 owed",debt3:"Pay-later owed",planDebt:"Plan debt balance",carSettle:"Car settlement figure"};
+var GOAL_BUFFER=1000,GOAL_FULL=3000;
+var HORIZONS=["This week","This month","Next 3 months","Before Nov 2027"];
+var GROUPS=[
+  {key:"income",title:"Coming in",hint:"Your take-home. Bonuses skip this and go straight to the plan."},
+  {key:"shared",title:"Household",hint:"Full bills for the house. You pay your share; the slider sets it."},
+  {key:"personal",title:"Yours",hint:"Bills and debts in your name."},
+  {key:"spending",title:"Spending money",hint:"Goes to your spending account. When it's gone, it's gone."}
+];
+
+var $=function(s,el){return (el||document).querySelector(s);};
+var $$=function(s,el){return Array.prototype.slice.call((el||document).querySelectorAll(s));};
+function num(v){if(v===null||v===undefined||v==="")return 0;var x=parseFloat(String(v).replace(/[£,\s]/g,""));return isFinite(x)?x:0;}
+function has(v){return v!==null&&v!==undefined&&v!==""&&isFinite(Number(v));}
+function r2(n){return Math.round(n*100)/100;}
+function clamp(n,a,b){return Math.min(b,Math.max(a,n));}
+function money(n,dp){if(n===null||n===undefined||!isFinite(n))return "—";dp=dp===undefined?2:dp;var s=Math.abs(n).toLocaleString("en-GB",{minimumFractionDigits:dp,maximumFractionDigits:dp});return (n<0?"−":"")+"£"+s;}
+function m0(n){return money(n,0);}
+function signed(n){return (n>0?"+":"")+money(n);}
+function clone(o){return JSON.parse(JSON.stringify(o));}
+function ordinal(d){d=Math.round(num(d));if(d<1||d>31)return "";var s=(d%100>=11&&d%100<=13)?"th":({1:"st",2:"nd",3:"rd"}[d%10]||"th");return d+s;}
+function h(tag,attrs){var el=document.createElement(tag);if(attrs){for(var k in attrs){var v=attrs[k];if(v===null||v===undefined||v===false)continue;if(k==="class")el.className=v;else if(k==="text")el.textContent=v;else if(k.slice(0,2)==="on")el.addEventListener(k.slice(2),v);else el.setAttribute(k,v===true?"":String(v));}}for(var i=2;i<arguments.length;i++){var kid=arguments[i];if(kid===null||kid===undefined||kid===false)continue;el.append(kid.nodeType?kid:document.createTextNode(String(kid)));}return el;}
+
+var S={data:null,ready:false};
+var ST={token:null,sha:null,remote:null,queue:[],flushing:false,timer:null,lastPull:0,lastSaved:null};
+
+/* ---------- storage: one JSON file in a private GitHub repo ---------- */
+function readToken(){try{return localStorage.getItem(CFG.tokenKey)||sessionStorage.getItem(CFG.tokenKey);}catch(e){return null;}}
+function writeToken(t,remember){try{if(remember)localStorage.setItem(CFG.tokenKey,t);else sessionStorage.setItem(CFG.tokenKey,t);}catch(e){}}
+function clearToken(){try{localStorage.removeItem(CFG.tokenKey);sessionStorage.removeItem(CFG.tokenKey);}catch(e){}}
+function b64encode(str){var bytes=new TextEncoder().encode(str),bin="";for(var i=0;i<bytes.length;i+=0x8000)bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000));return btoa(bin);}
+function b64decode(b64){var bin=atob(String(b64).replace(/\s/g,"")),bytes=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);return new TextDecoder().decode(bytes);}
+function apiUrl(withRef){return "https://api.github.com/repos/"+CFG.owner+"/"+CFG.repo+"/contents/"+CFG.path+(withRef?"?ref="+encodeURIComponent(CFG.branch):"");}
+async function gh(method,body){
+  var headers={"Accept":"application/vnd.github+json","Authorization":"Bearer "+ST.token,"X-GitHub-Api-Version":"2022-11-28"};
+  if(body)headers["Content-Type"]="application/json";
+  var res;
+  try{res=await fetch(apiUrl(method==="GET"),{method:method,cache:"no-store",headers:headers,body:body?JSON.stringify(body):undefined});}
+  catch(e){var ne=new Error("network");ne.status=0;throw ne;}
+  var json=null;try{json=await res.json();}catch(e){}
+  if(!res.ok){var err=new Error((json&&json.message)||("HTTP "+res.status));err.status=res.status;throw err;}
+  return json;
+}
+async function pull(){var j=await gh("GET");if(!j||typeof j.content!=="string")throw Object.assign(new Error("No data file"),{status:404});ST.sha=j.sha;ST.lastPull=Date.now();return JSON.parse(b64decode(j.content));}
+async function push(data,message){var j=await gh("PUT",{message:message,content:b64encode(JSON.stringify(data,null,1)+"\n"),sha:ST.sha,branch:CFG.branch});ST.sha=j&&j.content?j.content.sha:ST.sha;}
+function errFor(e){
+  var s=e&&e.status,m=String(e&&e.message||"");
+  if(s===0)return "Couldn't reach GitHub. Check your connection and try again.";
+  if(s===401)return "GitHub didn't accept that token. Check you copied all of it, or make a new one.";
+  if(s===403&&/rate limit/i.test(m))return "GitHub's rate limit kicked in. Wait a few minutes and try again.";
+  if(s===403)return "That token can't open the plan. It needs Contents: Read and write on "+CFG.repo+".";
+  if(s===404)return "That token can't see "+CFG.repo+". Under Repository access, pick Only select repositories, then "+CFG.repo+".";
+  return "GitHub said: "+m;
+}
+function editingNow(){var ae=document.activeElement;return !!(ae&&ae.closest&&ae.closest("#plan, #car, #ciForm"));}
+function enqueue(op,delay){
+  if(op.kind==="plan"&&ST.queue.some(function(o){return o.kind==="plan";}))op=null;
+  if(op)ST.queue.push(op);
+  setSave("Saving…");
+  clearTimeout(ST.timer);
+  ST.timer=setTimeout(flush,delay===undefined?400:delay);
+}
+function summarise(ops){var seen=[];ops.forEach(function(o){if(seen.indexOf(o.label)<0)seen.push(o.label);});var m=seen.join("; ");return m.length>72?m.slice(0,69)+"…":m;}
+async function flush(){
+  if(ST.flushing){ST.again=true;return;}
+  if(!ST.queue.length||!ST.remote)return;
+  ST.flushing=true;
+  var ops=ST.queue.splice(0),msg=summarise(ops),base=null;
+  try{
+    for(var attempt=0;attempt<3;attempt++){
+      base=clone(ST.remote);
+      ops.forEach(function(op){op.apply(base);});
+      try{await push(base,msg);ST.remote=base;break;}
+      catch(e){
+        if((e.status===409||e.status===422)&&attempt<2){ST.remote=await pull();continue;}
+        throw e;
+      }
+    }
+    adoptRemote(base);
+    ST.lastSaved=new Date();
+    setSave(ST.queue.length?"Saving…":"Saved");
+    setSync();
+  }catch(e){
+    ST.queue=ops.concat(ST.queue);
+    setSave(e.status===0?"Offline. Changes will save when you reconnect.":"Couldn't save. "+errFor(e),true);
+    if(e.status===401)showConnect("GitHub stopped accepting the saved token. It may have expired, so make a new one.");
+  }finally{
+    ST.flushing=false;
+    if(ST.again||ST.queue.length){ST.again=false;if(ST.queue.length){clearTimeout(ST.timer);ST.timer=setTimeout(flush,600);}}
+  }
+}
+function adoptRemote(base){
+  /* show what was saved (including other devices' changes), keep anything still waiting to save, and keep the plan while it's being edited */
+  var keepPlan=editingNow()||ST.queue.some(function(o){return o.kind==="plan";});
+  var plan=S.data.plan,next=clone(base);normalize(next);
+  ST.queue.forEach(function(op){if(op.kind!=="plan")op.apply(next);});
+  if(keepPlan)next.plan=plan;
+  S.data=next;
+  renderCheckins();renderActions();renderTiles();updateCar();renderDates();
+  if(!keepPlan)renderPlanAll();
+}
+async function refresh(){
+  if(!ST.token||!S.ready||ST.queue.length||ST.flushing||editingNow())return;
+  if(Date.now()-ST.lastPull<15000)return;
+  var oldSha=ST.sha;
+  try{
+    var d=await pull();
+    ST.remote=d; /* the sha just read always travels with its data, so the next save builds on it */
+    if(ST.sha!==oldSha&&!ST.queue.length&&!ST.flushing&&!editingNow()){S.data=clone(d);normalize(S.data);renderAll();}
+  }catch(e){}
+}
+
+/* ---------- data helpers ---------- */
+function meta(k,f){var m=S.data&&S.data.meta;return m&&m[k]!==undefined&&m[k]!==null&&m[k]!==""?m[k]:f;}
+function label(k){var l=meta("labels",{});return l[k]||DEFAULT_LABELS[k];}
+function normalize(d){
+  d.meta=d.meta||{};d.plan=d.plan||{};
+  ["income","shared","personal","spending"].forEach(function(k){if(!Array.isArray(d.plan[k]))d.plan[k]=[];});
+  if(!has(d.plan.sharePct))d.plan.sharePct=50;
+  if(!d.plan.car)d.plan.car={balloon:0,a4Value:0,ev:{gross:0,list:0,bikPct:5,charging:0,studentLoan:true}};
+  if(!d.plan.car.ev)d.plan.car.ev={gross:0,list:0,bikPct:5,charging:0,studentLoan:true};
+  if(!d.checkins||typeof d.checkins!=="object"||Array.isArray(d.checkins))d.checkins={};
+  if(!Array.isArray(d.actions))d.actions=[];
+  if(!Array.isArray(d.dates))d.dates=[];
+}
+function checkins(){if(!S.data)return [];var c=S.data.checkins;return Object.keys(c).filter(function(k){return /^\d{4}-\d{2}$/.test(k);}).sort().map(function(k){return Object.assign({id:k},c[k]);});}
+function latest(){var a=checkins();return a.length?a[a.length-1]:null;}
+function sum(list){return r2((list||[]).reduce(function(a,l){return a+num(l.amount);},0));}
+function lineAmt(id){var p=S.data&&S.data.plan;if(!p)return 0;var gs=["personal","shared","spending","income"];for(var i=0;i<gs.length;i++){var l=(p[gs[i]]||[]).find(function(x){return x.id===id;});if(l)return num(l.amount);}return 0;}
+function calc(){
+  var p=S.data&&S.data.plan;if(!p)return null;
+  var income=sum(p.income),sharedTotal=sum(p.shared),share=clamp(num(p.sharePct),0,100)/100;
+  var myShared=r2(sharedTotal*share),partner=r2(sharedTotal-myShared);
+  var personal=sum(p.personal),spending=sum(p.spending);
+  var pot=sum((p.spending||[]).filter(function(l){return l.pot==="pot";}));
+  var monzo=r2(spending-pot);
+  var surplus=r2(income-myShared-personal-spending);
+  return {income:income,sharedTotal:sharedTotal,share:share,myShared:myShared,partner:partner,personal:personal,spending:spending,monzo:monzo,pot:pot,surplus:surplus,weekly:r2(monzo*12/52)};
+}
+function balloonDate(){var s=meta("balloonDate","");var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s);return m?new Date(+m[1],+m[2]-1,+m[3]):null;}
+function monthsLeft(){var b=balloonDate();if(!b)return 0;var n=new Date();return Math.max(0,(b.getFullYear()-n.getFullYear())*12+(b.getMonth()-n.getMonth()));}
+function balloonAmt(){var c=S.data&&S.data.plan&&S.data.plan.car;return c&&num(c.balloon)>0?num(c.balloon):0;}
+function debtTotal(x){if(!x)return null;if(!DEBT_KEYS.some(function(k){return has(x[k]);}))return null;return r2(DEBT_KEYS.reduce(function(a,k){return a+num(x[k]);},0));}
+function monthName(id){if(!id||!/^\d{4}-\d{2}$/.test(id))return id||"";var p=id.split("-");return new Date(+p[0],+p[1]-1,1).toLocaleDateString("en-GB",{month:"short",year:"numeric"});}
+function thisMonth(){var n=new Date();return n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0");}
+function setBar(el,frac){var f=clamp(frac||0,0,1);el.style.width=(f*100).toFixed(1)+"%";el.parentElement.classList.toggle("done",f>=1);}
+function notice(t){var n=$("#notice");n.textContent=t||"";n.hidden=!t;}
+function setSave(t,bad){var el=$("#saveState");el.textContent=t;el.classList.toggle("bad",!!bad);}
+function setSync(){var el=$("#syncState");if(!el)return;el.textContent=ST.lastSaved?"Last saved to GitHub at "+ST.lastSaved.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}):"Synced with GitHub";}
+
+/* ---------- header, tiles ---------- */
+function renderHeader(){
+  if(!S.data)return;
+  var t=meta("title","Money Plan");$("#hTitle").textContent=t;document.title=t;
+  $("#hSub").textContent=meta("subtitle","Private · syncs through GitHub");
+  $("#hLede").textContent=meta("lede","Payday gives every pound a job. One check-in a month.");
+  $("#bankName").textContent=meta("bank","Main current account");
+  $("#baselineNote").textContent=meta("baselineNote","Your earlier spending against this plan.");
+  $("#footNote").textContent=meta("footer","");
+  $$(".carName").forEach(function(el){el.textContent=meta("car","car");});
+  var b=balloonDate();$("#carWhen").textContent=b?b.toLocaleDateString("en-GB",{month:"long",year:"numeric"}):"The balloon date";
+  $("#carLede").textContent=meta("carLede","None of these routes needs new car finance.");
+  $("#evNote").textContent=meta("evNote","Ask the scheme how it checks affordability and what happens if you change jobs.");
+}
+function renderTiles(){
+  var c=calc();
+  var ts=$("#tSurplus");ts.textContent=c?m0(c.surplus):"—";ts.classList.toggle("neg",!!c&&c.surplus<0);
+  var L=latest();
+  var saved=L&&(has(L.buffer)||has(L.carFund))?num(L.buffer)+num(L.carFund):null;
+  $("#tSaved").textContent=saved===null?"—":m0(saved);
+  $("#tSavedSub").textContent=saved===null?"log your balances in the check-in":"buffer + car fund, "+monthName(L.id);
+  var cf=L&&has(L.carFund)?num(L.carFund):null,bal=balloonAmt();
+  $("#tCar").textContent=cf===null?"—":m0(cf);
+  setBar($("#tCarBar"),cf===null||!bal?0:cf/bal);
+  $("#tCarSub").textContent=bal?"of "+m0(bal)+" for the balloon":"set the balloon below";
+  $("#tMonths").textContent=balloonDate()?String(monthsLeft()):"—";
+  $("#tMonthsSub").textContent=meta("balloonNote","");
+}
+
+/* ---------- payday statement ---------- */
+function renderStatement(){
+  var box=$("#statementRows");box.replaceChildren();
+  var c=calc();
+  if(!c){box.append(h("div",{class:"st-row"},h("span",{class:"st-date",text:"Payday"}),h("span",{class:"st-desc",text:"Loading your plan…"}),h("span",{class:"st-amt",text:"—"})));return;}
+  var pd=num(meta("payday",25)),d0=ordinal(pd)||"Payday",d1=ordinal(pd>=28?1:pd+1)||"Next day",dPrev=ordinal(pd<=1?28:pd-1)||"Day before";
+  var partner=meta("partner",""),spend=meta("spendAccount","spending account");
+  var incomeLabel=(S.data.plan.income[0]&&S.data.plan.income[0].label)||"Take-home pay";
+  var save=Math.max(0,c.surplus);
+  var rows=[
+    [d0,incomeLabel,"Your pay lands",c.income],
+    [d0,(partner?partner+"'s":"Your partner's")+" share of the household",Math.round(100-c.share*100)+"% of "+money(c.sharedTotal)+" in household bills",c.partner],
+    [d1,"To savings at another bank","A notice account, out of reach of your phone",-save],
+    [d1,"To a pot for irregular costs","Servicing, MOT, gifts, Christmas, the vet",-c.pot],
+    ["Mondays","To "+spend+" for spending",money(c.weekly)+" a week for everything that isn't a bill",-c.monzo],
+    ["All month","Bills, direct debits and the food shop","The household in full, plus your own bills",-(r2(c.sharedTotal+c.personal))]
+  ];
+  rows.forEach(function(r){
+    if(!r[3]&&r[3]!==0)return;
+    box.append(h("div",{class:"st-row"},h("span",{class:"st-date",text:r[0]}),h("span",{class:"st-desc"},r[1],h("small",{text:r[2]})),h("span",{class:"st-amt"+(r[3]>0?" in":""),text:(r[3]>0?"+":"")+money(r[3])})));
+  });
+  var left=r2(c.income+c.partner-save-c.pot-c.monzo-c.sharedTotal-c.personal);
+  box.append(h("div",{class:"st-row total"+(left<0?" short":"")},h("span",{class:"st-date",text:dPrev}),h("span",{class:"st-desc"},"Left before the next payday",h("small",{text:left<0?"Short. Trim spending money until this reaches £0.":"Aim for £0 to £100. Anything more goes to savings."})),h("span",{class:"st-amt",text:money(left)})));
+}
+
+/* ---------- plan editor ---------- */
+function fmtInput(v){return num(v).toFixed(2);}
+function renderPlan(){
+  var grid=$("#planGrid");grid.replaceChildren();
+  var P=S.data&&S.data.plan;
+  if(!P){grid.append(h("p",{class:"empty",text:"Loading your plan…"}));updatePlanNumbers();return;}
+  GROUPS.forEach(function(g){
+    var list=P[g.key];
+    var wrap=h("div",{class:"group","data-group":g.key});
+    wrap.append(h("div",{class:"g-head"},h("h3",{text:g.title}),h("span",{class:"g-total",id:"tot-"+g.key,text:"—"})));
+    wrap.append(h("p",{class:"g-hint",text:g.hint}));
+    if(g.key==="shared"){
+      var range=h("input",{type:"range",min:"0",max:"100",step:"1",id:"sharePct"});
+      range.value=String(clamp(num(P.sharePct),0,100));
+      var out=h("output",{id:"shareOut",for:"sharePct",text:Math.round(num(P.sharePct))+"%"});
+      range.addEventListener("input",function(){P.sharePct=Number(range.value);out.textContent=range.value+"%";onPlanChange(false);});
+      wrap.append(h("div",{class:"share"},h("label",{for:"sharePct",text:"Your share"}),range,out));
+    }
+    list.forEach(function(l,i){wrap.append(lineEl(g.key,l,i));});
+    if(g.key==="shared")wrap.append(h("div",{class:"my"},h("span",{text:"You pay"}),h("span",{class:"mono",id:"myShared",text:"—"})));
+    wrap.append(h("button",{type:"button",class:"add",onclick:function(){list.push({id:"l"+Date.now().toString(36),label:"",amount:0});renderPlan();onPlanChange(false);var ins=$$('[data-group="'+g.key+'"] input.lbl');if(ins.length)ins[ins.length-1].focus();}},"+ Add a line"));
+    grid.append(wrap);
+  });
+  updatePlanNumbers();
+}
+function lineEl(gkey,l,i){
+  var base="ln-"+gkey+"-"+i;
+  var lbl=h("input",{class:"lbl",type:"text",placeholder:"Name this line","aria-label":"Line name",id:base+"-l",autocomplete:"off"});
+  lbl.value=l.label||"";lbl.title=l.label||"";
+  var amt=h("input",{class:"amt",type:"text",inputmode:"decimal","aria-label":(l.label||"Line")+", pounds a month",id:base+"-a",autocomplete:"off"});
+  amt.value=fmtInput(l.amount);
+  lbl.addEventListener("input",function(){l.label=lbl.value;lbl.title=lbl.value;onPlanChange(true);});
+  amt.addEventListener("input",function(){l.amount=r2(num(amt.value));onPlanChange(false);});
+  amt.addEventListener("blur",function(){amt.value=fmtInput(l.amount);});
+  var rm=h("button",{type:"button",class:"rm","aria-label":"Remove "+(l.label||"line"),title:"Remove",onclick:function(){S.data.plan[gkey].splice(i,1);renderPlan();onPlanChange(false);}},"×");
+  var row=h("div",{class:"line"},lbl,amt,rm);
+  if(l.note)row.append(h("span",{class:"note",text:l.note}));
+  return row;
+}
+function planOp(){return {kind:"plan",label:"Update the plan",apply:function(d){d.plan=clone(S.data.plan);}};}
+function onPlanChange(labelOnly){
+  if(!labelOnly){updatePlanNumbers();renderStatement();renderTiles();renderThen();updateCar();}
+  enqueue(planOp(),1500);
+}
+function updatePlanNumbers(){
+  var c=calc();
+  GROUPS.forEach(function(g){var el=$("#tot-"+g.key);if(el)el.textContent=c?money(sum(S.data.plan[g.key])):"—";});
+  var my=$("#myShared");if(my&&c)my.textContent=money(c.myShared);
+  var res=$("#result"),big=$("#resultBig"),sub=$("#resultSub");
+  if(!c){big.textContent="—";sub.textContent="";res.classList.remove("bad");return;}
+  big.textContent=money(c.surplus);
+  res.classList.toggle("bad",c.surplus<0);
+  var ml=monthsLeft();
+  sub.textContent=c.surplus<0?"The plan spends more than comes in. Trim spending money first.":(ml?"About "+m0(c.surplus*ml)+" over the "+ml+" months to the balloon, before bonuses.":"About "+m0(c.surplus*12)+" a year, before bonuses.");
+}
+
+/* ---------- then vs now ---------- */
+function renderThen(){
+  var tb=$("#thenBody");tb.replaceChildren();
+  var c=calc(),p=S.data&&S.data.plan;
+  if(!c||!p||!Array.isArray(p.baseline)||!p.baseline.length){tb.append(h("tr",{},h("td",{colspan:"4",class:"empty",text:"No earlier figures saved."})));return;}
+  var mapped={};
+  p.baseline.forEach(function(b){
+    var planVal=0;
+    if(b.kind==="shared")planVal=c.myShared;
+    else if(b.kind==="surplus")planVal=c.surplus;
+    else{(b.planIds||[]).forEach(function(id){mapped[id]=1;planVal+=lineAmt(id);});planVal=r2(planVal);}
+    var d=r2(planVal-num(b.then)),good=b.kind==="surplus"?d>0:d<0;
+    tb.append(h("tr",{},h("td",{text:b.label}),h("td",{class:"n",text:m0(num(b.then))}),h("td",{class:"n",text:m0(planVal)}),h("td",{class:"n "+(Math.abs(d)<1?"":(good?"good":"bad")),text:Math.abs(d)<1?"—":(d>0?"+":"")+m0(d)})));
+  });
+  var extra=r2((p.personal||[]).concat(p.spending||[]).filter(function(l){return !mapped[l.id];}).reduce(function(a,l){return a+num(l.amount);},0));
+  if(Math.abs(extra)>=0.5)tb.append(h("tr",{},h("td",{text:"Lines you've added"}),h("td",{class:"n",text:"—"}),h("td",{class:"n",text:m0(extra)}),h("td",{class:"n",text:""})));
+}
+
+/* ---------- check-in ---------- */
+function renderGoals(){
+  var box=$("#goals");box.replaceChildren();
+  var all=checkins(),L=latest(),bal=balloonAmt(),ml=monthsLeft();
+  var buf=L&&has(L.buffer)?num(L.buffer):null;
+  var cf=L&&has(L.carFund)?num(L.carFund):null;
+  var debtNow=debtTotal(L);
+  var firstRec=all.find(function(x){return debtTotal(x)!==null;});
+  var firstDebt=firstRec?debtTotal(firstRec):null;
+  var need=cf===null||!bal?null:Math.max(0,bal-cf)/Math.max(1,ml);
+  var goals=[
+    {label:"Starter buffer",val:buf,target:GOAL_BUFFER,hint:"The first £1,000, for the surprises."},
+    {label:"Card and pay-later debt",val:debtNow,target:0,first:firstDebt,hint:meta("debtGoalHint","Highest rate first; each freed payment goes to savings.")},
+    {label:"Car fund for the balloon",val:cf,target:bal||1,hint:need===null?"Log the car fund at your next check-in.":(need===0?"Done. That pays off the car.":"Needs "+m0(need)+" a month for the "+ml+" months left.")},
+    {label:"Full buffer",val:buf,target:GOAL_FULL,hint:"Roughly three months of essentials. It grows fastest once the balloon is paid."}
+  ];
+  goals.forEach(function(g){
+    var frac,valText;
+    if(g.target===0){
+      if(g.val===null){frac=0;valText="add balances";}
+      else if(g.first&&g.first>0){frac=1-g.val/g.first;valText=g.val<=0?"cleared":m0(g.val)+" left";}
+      else{frac=g.val<=0?1:0;valText=g.val<=0?"cleared":m0(g.val)+" left";}
+    }else{frac=g.val===null?0:g.val/g.target;valText=g.val===null?"—":m0(g.val)+" of "+m0(g.target);}
+    var bar=h("div",{class:"bar"},h("i"));
+    box.append(h("div",{class:"goal"},h("span",{class:"g-name",text:g.label}),h("span",{class:"g-val",text:valText}),bar,h("p",{class:"g-hint",text:g.hint})));
+    setBar(bar.firstChild,frac);
+  });
+}
+function renderChart(){
+  var svg=$("#chart");if(!svg||!svg.parentElement.clientWidth)return;
+  var W=Math.max(300,Math.round(svg.parentElement.clientWidth-28)),H=230,P={l:48,r:16,t:16,b:30};
+  svg.setAttribute("viewBox","0 0 "+W+" "+H);svg.replaceChildren();
+  var sm=/^(\d{4})-(\d{2})$/.exec(meta("startMonth",""))||/^(\d{4})-(\d{2})$/.exec(thisMonth());
+  var start=[+sm[1],+sm[2]];
+  var b=balloonDate();var end=b?[b.getFullYear(),b.getMonth()+1]:[start[0]+1,start[1]];
+  var all=checkins();
+  all.forEach(function(c){var p=c.id.split("-").map(Number);var v=p[0]*12+p[1];if(v>end[0]*12+end[1])end=[p[0],p[1]];if(v<start[0]*12+start[1])start=[p[0],p[1]];});
+  var idx=function(y,m){return (y*12+m)-(start[0]*12+start[1]);};
+  var n=Math.max(1,idx(end[0],end[1]));
+  var targetEnd=GOAL_BUFFER+balloonAmt();
+  var pts=all.filter(function(c){return has(c.buffer)||has(c.carFund);}).map(function(c){var p=c.id.split("-").map(Number);return {i:idx(p[0],p[1]),v:num(c.buffer)+num(c.carFund)};});
+  var startV=pts.length?pts[0].v:0,startI=pts.length?pts[0].i:0;
+  var vmax=Math.max.apply(null,[targetEnd].concat(pts.map(function(p){return p.v;})))*1.1;
+  var x=function(i){return P.l+(W-P.l-P.r)*(i/n);},y=function(v){return H-P.b-(H-P.t-P.b)*(v/vmax);};
+  var NS="http://www.w3.org/2000/svg";
+  var s=function(t,a,txt){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);if(txt!==undefined)e.textContent=txt;svg.append(e);return e;};
+  var step=vmax>16000?4000:(vmax>8000?2000:1000);
+  for(var v=0;v<=vmax;v+=step){s("line",{x1:P.l,x2:W-P.r,y1:y(v),y2:y(v),class:"grid"});s("text",{x:P.l-8,y:y(v)+4,"text-anchor":"end",class:"ax"},v===0?"£0":"£"+(v/1000)+"k");}
+  var every=W<460?4:3;
+  for(var i=0;i<=n;i++){
+    if(i%every!==0&&i!==n)continue;
+    if(i!==n&&n-i<every-1)continue;
+    var tm=start[0]*12+start[1]-1+i,yy=Math.floor(tm/12),mm=tm%12;
+    s("text",{x:x(i),y:H-9,"text-anchor":i===0?"start":(i===n?"end":"middle"),class:"ax"},new Date(yy,mm,1).toLocaleDateString("en-GB",{month:"short"})+" ’"+String(yy).slice(2));
+  }
+  if(b){
+    var ti=idx(b.getFullYear(),b.getMonth()+1);
+    s("line",{x1:x(startI),y1:y(startV),x2:x(ti),y2:y(targetEnd),class:"target"});
+    s("text",{x:x(ti)-2,y:y(targetEnd)-9,"text-anchor":"end",class:"ax strong"},"Target "+m0(targetEnd));
+  }
+  if(pts.length){
+    s("path",{d:pts.map(function(p,k){return (k?"L":"M")+x(p.i).toFixed(1)+" "+y(p.v).toFixed(1);}).join(" "),class:"actual"});
+    pts.forEach(function(p){s("circle",{cx:x(p.i),cy:y(p.v),r:4,class:"dot"});});
+    var lp=pts[pts.length-1],lx=x(lp.i);
+    s("text",{x:lx>W-90?lx-8:lx+8,y:y(lp.v)-10,"text-anchor":lx>W-90?"end":"start",class:"ax strong"},m0(lp.v));
+  }else{
+    s("text",{x:(P.l+W-P.r)/2,y:(P.t+H-P.b)/2+20,"text-anchor":"middle",class:"ax"},"Your first check-in starts this line");
+  }
+}
+function buildCiFields(){
+  var box=$("#ciFields");box.replaceChildren();
+  KEYS.forEach(function(k){box.append(h("label",{for:"ci-"+k},label(k),h("input",{id:"ci-"+k,type:"text",inputmode:"decimal",autocomplete:"off"})));});
+  var head=$("#ciHead");head.replaceChildren(h("th",{text:"Month"}),h("th",{class:"n",text:label("buffer")}),h("th",{class:"n",text:label("carFund")}),h("th",{class:"n",text:"Cards + pay-later"}),h("th",{class:"n",text:label("planDebt").replace(/ balance$/i,"")}),h("th",{class:"n",text:label("carSettle").replace(/ figure$/i,"")}));
+}
+function renderCiTable(){
+  var tb=$("#ciBody");tb.replaceChildren();
+  var all=checkins();
+  if(!all.length){tb.append(h("tr",{},h("td",{colspan:"6",class:"empty",text:"No check-ins yet. The first one sets your starting line."})));return;}
+  all.slice().reverse().forEach(function(c){
+    var d=debtTotal(c),cell=function(v){return h("td",{class:"n",text:has(v)?m0(num(v)):"—"});};
+    tb.append(h("tr",{},h("td",{text:monthName(c.id)}),cell(c.buffer),cell(c.carFund),h("td",{class:"n",text:d===null?"—":m0(d)}),cell(c.planDebt),cell(c.carSettle)));
+    if(c.note)tb.append(h("tr",{class:"note-row"},h("td",{colspan:"6",text:c.note})));
+  });
+}
+function prefillForm(force){
+  var f=$("#ciForm");if(!force&&f.contains(document.activeElement))return;
+  var mEl=$("#ciMonth");if(!mEl.value)mEl.value=thisMonth();
+  var all=checkins(),cur=all.find(function(c){return c.id===mEl.value;});
+  var prev=all.filter(function(c){return c.id<mEl.value;}),L=prev.length?prev[prev.length-1]:latest();
+  KEYS.forEach(function(k){var el=$("#ci-"+k);if(!el)return;el.value=cur&&has(cur[k])?String(num(cur[k])):"";el.placeholder=L&&has(L[k])?"last: "+m0(num(L[k])):"£";});
+  $("#ci-note").value=cur&&cur.note?cur.note:"";
+}
+function renderCheckins(){renderGoals();renderChart();renderCiTable();prefillForm(false);}
+
+/* ---------- car decision ---------- */
+function renderCarInputs(){
+  var car=S.data&&S.data.plan&&S.data.plan.car;
+  function bind(id,get,set){var el=$("#"+id);if(document.activeElement!==el)el.value=car&&has(get(car))?String(get(car)):"";el.oninput=function(){var c2=S.data.plan.car;set(c2,el.value);updateCar();enqueue(planOp(),1500);};}
+  bind("a4Value",function(c){return c.a4Value;},function(c,v){c.a4Value=r2(num(v));});
+  bind("balloon",function(c){return c.balloon;},function(c,v){c.balloon=r2(num(v));renderTiles();});
+  bind("evGross",function(c){return c.ev.gross;},function(c,v){c.ev.gross=r2(num(v));});
+  bind("evList",function(c){return c.ev.list;},function(c,v){c.ev.list=r2(num(v));});
+  bind("evBik",function(c){return c.ev.bikPct;},function(c,v){c.ev.bikPct=num(v);});
+  bind("evCharge",function(c){return c.ev.charging;},function(c,v){c.ev.charging=r2(num(v));});
+  var sl=$("#evSL");sl.checked=car?!!car.ev.studentLoan:true;
+  sl.onchange=function(){S.data.plan.car.ev.studentLoan=sl.checked;updateCar();enqueue(planOp(),600);};
+  updateCar();
+}
+function updateCar(){
+  var car=S.data&&S.data.plan&&S.data.plan.car;
+  var set=function(id,t){var el=$("#"+id);if(el)el.textContent=t;};
+  if(!car)return;
+  var pcp=lineAmt("pcp"),ins=lineAmt("ins"),ved=lineAmt("ved"),fuel=lineAmt("fuel");
+  var nowCost=r2(pcp+ins+ved+fuel),keep=r2(ins+ved+fuel);
+  var equity=r2(num(car.a4Value)-num(car.balloon));
+  var ev=car.ev||{},rate=0.20+0.08+(ev.studentLoan?0.09:0);
+  var bik=r2(num(ev.list)*num(ev.bikPct)/100*0.20/12);
+  var evNet=r2(num(ev.gross)*(1-rate)+bik+num(ev.charging));
+  set("balloonText",m0(num(car.balloon)));
+  set("kOwn",m0(num(car.a4Value)));set("kNow",money(nowCost));set("kKeep",money(keep));set("kFree",money(pcp));
+  set("eNet",money(evNet));set("eRate",Math.round(rate*100)+"%");set("eBik",money(bik));
+  set("eVsNow",signed(r2(evNet-nowCost)));set("eVsKeep",signed(r2(evNet-keep)));set("eEquity",m0(Math.max(0,equity)));
+  var L=latest(),fund=L&&has(L.carFund)?num(L.carFund):0;
+  set("cFund",m0(fund));set("cEquity",m0(Math.max(0,equity)));set("cTotal",m0(fund+Math.max(0,equity)));
+}
+
+/* ---------- actions, dates ---------- */
+function renderActions(){
+  var box=$("#actGroups");box.replaceChildren();
+  var acts=(S.data?S.data.actions:[]).slice().sort(function(a,b){return num(a.order)-num(b.order);});
+  if(!acts.length){box.append(h("p",{class:"empty",text:"No actions saved."}));$("#actCount").textContent="";return;}
+  $("#actCount").textContent=acts.filter(function(a){return a.done;}).length+" of "+acts.length+" done";
+  var groups=HORIZONS.slice();
+  acts.forEach(function(a){var w=a.when||"Later";if(groups.indexOf(w)<0)groups.push(w);});
+  groups.forEach(function(w){
+    var items=acts.filter(function(a){return (a.when||"Later")===w;});
+    if(!items.length)return;
+    var g=h("div",{class:"act-group"},h("h3",{},w,h("span",{text:items.filter(function(a){return a.done;}).length+"/"+items.length})));
+    items.forEach(function(a){
+      var cb=h("input",{type:"checkbox",id:"act-"+a.id});
+      cb.checked=!!a.done;
+      cb.addEventListener("change",function(){toggleAction(a.id,cb.checked);});
+      g.append(h("label",{class:"act"+(a.done?" done":"")},cb,h("span",{},h("span",{class:"a-text",text:a.text||""}),a.detail?h("span",{class:"a-detail",text:a.detail}):null)));
+    });
+    box.append(g);
+  });
+}
+function toggleAction(id,done){
+  var a=S.data.actions.find(function(x){return x.id===id;});if(!a)return;
+  var fields={done:done,doneAt:done?new Date().toISOString().slice(0,10):null};
+  Object.assign(a,fields);renderActions();
+  enqueue({kind:"action",label:(done?"Done: ":"Reopened: ")+(a.text||id),apply:function(d){var t=(d.actions||[]).find(function(x){return x.id===id;});if(t)Object.assign(t,fields);}},200);
+}
+function renderDates(){
+  var box=$("#datesList");box.replaceChildren();
+  var ds=S.data?S.data.dates:[];
+  if(!ds.length){box.append(h("p",{class:"empty",text:"No dates saved."}));return;}
+  ds.forEach(function(d){box.append(h("div",{class:"date"},h("b",{text:d.when||""}),h("div",{},d.title?h("strong",{text:d.title+" "}):null,d.text||"")));});
+}
+
+/* ---------- wiring ---------- */
+$("#tokenLink").href="https://github.com/settings/personal-access-tokens/new?"+["name="+encodeURIComponent("Money Plan"),"description="+encodeURIComponent("Read and write "+CFG.repo+" for the Money Plan page"),"target_name="+encodeURIComponent(CFG.owner),"expires_in=366","contents=write"].join("&");
+$("#repoName").textContent=CFG.repo;
+$("#historyLink").href="https://github.com/"+CFG.owner+"/"+CFG.repo+"/commits/"+CFG.branch+"/"+CFG.path;
+$("#ciMonth").addEventListener("change",function(){prefillForm(true);});
+$("#ciForm").addEventListener("submit",function(e){
+  e.preventDefault();
+  var msg=$("#ciMsg"),id=$("#ciMonth").value;
+  if(!/^\d{4}-\d{2}$/.test(id)){msg.textContent="Pick a month first.";return;}
+  var body={month:id,saved:new Date().toISOString()};
+  KEYS.forEach(function(k){var v=$("#ci-"+k).value.trim();body[k]=v===""?null:r2(num(v));});
+  var note=$("#ci-note").value.trim();if(note)body.note=note.slice(0,500);
+  S.data.checkins[id]=body;
+  if(document.activeElement)document.activeElement.blur();
+  renderCheckins();renderTiles();updateCar();
+  msg.textContent="Saved "+monthName(id)+". Syncing to GitHub…";
+  enqueue({kind:"checkin",label:"Check-in "+monthName(id),apply:function(d){d.checkins=d.checkins||{};d.checkins[id]=body;}},0);
+});
+$("#connectForm").addEventListener("submit",async function(e){
+  e.preventDefault();
+  var t=$("#tokenInput").value.trim(),msg=$("#connectMsg"),btn=$("#connectBtn");
+  if(!/^(github_pat_|ghp_)[A-Za-z0-9_]{20,}$/.test(t)){msg.textContent="That doesn't look like a GitHub token. A new one starts with github_pat_.";return;}
+  ST.token=t;btn.disabled=true;msg.textContent="Checking with GitHub…";
+  try{var d=await pull();writeToken(t,$("#remember").checked);$("#tokenInput").value="";load(d);}
+  catch(err){ST.token=null;msg.textContent=errFor(err);}
+  finally{btn.disabled=false;}
+});
+$("#disconnectBtn").addEventListener("click",function(){clearToken();ST.token=null;location.reload();});
+var rz=null;window.addEventListener("resize",function(){clearTimeout(rz);rz=setTimeout(renderChart,150);});
+document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")refresh();});
+window.addEventListener("focus",refresh);
+window.addEventListener("online",function(){if(ST.queue.length)flush();});
+window.addEventListener("beforeunload",function(e){if(ST.queue.length||ST.flushing){e.preventDefault();e.returnValue="";}});
+
+function showConnect(message){document.body.classList.add("locked");$("#connect").hidden=false;$("#connectMsg").textContent=message||"";}
+function renderPlanAll(){renderPlan();renderStatement();renderTiles();renderThen();renderCarInputs();}
+function renderAll(){renderHeader();buildCiFields();renderPlanAll();renderCheckins();renderActions();renderDates();}
+function load(d){
+  ST.remote=d;S.data=clone(d);normalize(S.data);S.ready=true;
+  $("#connect").hidden=true;document.body.classList.remove("locked");notice("");
+  renderAll();setSync();
+}
+async function boot(){
+  ST.token=readToken();
+  if(!ST.token){showConnect("");return;}
+  try{load(await pull());}
+  catch(e){
+    if(e.status===0){notice("Couldn't reach GitHub. Check your connection, then reload.");return;}
+    showConnect(errFor(e));
+  }
+}
+boot();
+})();
+</script>
+</body>
+</html>
