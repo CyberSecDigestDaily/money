@@ -846,7 +846,7 @@ function renderDates(){
 }
 
 /* ---------- wiring ---------- */
-$("#tokenLink").href="https://github.com/settings/personal-access-tokens/new?"+["name="+encodeURIComponent("Money Plan"),"description="+encodeURIComponent("Read and write "+CFG.repo+" for the Money Plan page"),"target_name="+encodeURIComponent(CFG.owner),"expires_in=366","contents=write"].join("&");
+$("#tokenLink").href="https://github.com/settings/personal-access-tokens/new?"+["name="+encodeURIComponent("Money Plan"),"description="+encodeURIComponent("Read and write "+CFG.repo+" for the Money Plan page"),"target_name="+encodeURIComponent(CFG.owner),"expires_in=365","contents=write"].join("&");
 $("#repoName").textContent=CFG.repo;
 $("#historyLink").href="https://github.com/"+CFG.owner+"/"+CFG.repo+"/commits/"+CFG.branch+"/"+CFG.path;
 $("#ciMonth").addEventListener("change",function(){prefillForm(true);});
