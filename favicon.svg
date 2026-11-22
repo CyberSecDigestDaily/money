@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><clipPath id="t"><rect width="64" height="64" rx="14"/></clipPath>
+  <rect width="64" height="64" rx="14" fill="#1f3a5f"/>
+  <g clip-path="url(#t)">
+  <circle cx="32" cy="32" r="22.5" fill="none" stroke="#33557f" stroke-width="5"/>
+  <circle cx="32" cy="32" r="22.5" fill="none" stroke="#a6be74" stroke-width="5" stroke-linecap="round"
+          stroke-dasharray="99 142" transform="rotate(-90 32 32)"/>
+  <path d="M42.84 26.86V27.86H35.73V26.86Q35.73 26 35.12 25.39Q34.52 24.79 33.66 24.79Q32.8 24.79 32.2 25.39Q31.59 26 31.59 26.86V30.11H35.02V34.64H31.55L30.84 39.25H40.91V44.5H22.23V39.25H24.52V34.64H21.16V30.11H24.52V26.89Q24.52 23.61 26.82 21.55Q29.12 19.5 33.66 19.5Q36.59 19.5 38.66 20.46Q40.73 21.43 41.79 23.11Q42.84 24.79 42.84 26.86Z" fill="#ffffff"/>
+  </g>
+</svg>
